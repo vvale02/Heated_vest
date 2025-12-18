@@ -3,136 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SP624E Debug Controller</title>
+    <title>SP624E Service Scanner</title>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #38bdf8; }
-        body { font-family: sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 400px; background: var(--card); padding: 1.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-        h1 { font-size: 1.2rem; text-align: center; color: var(--accent); margin-top: 0; }
-        
-        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
-        #connectBtn { background: #10b981; color: white; }
-        #offBtn { background: #ef4444; color: white; }
-        
-        .slider-row { margin-bottom: 15px; }
-        label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
-        input[type=range] { width: 100%; height: 8px; border-radius: 5px; background: #334155; outline: none; -webkit-appearance: none; }
-        
-        /* Debug Log Style */
+        body { font-family: sans-serif; background-color: var(--bg); color: var(--text); padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 400px; background: var(--card); padding: 1.5rem; border-radius: 1.5rem; text-align: center; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #10b981; color: white; margin-bottom: 10px; }
         #debugLog { 
-            width: 100%; max-width: 400px; height: 120px; background: #000; color: #00ff00; 
-            font-family: monospace; font-size: 10px; padding: 10px; margin-top: 20px; 
-            border-radius: 8px; overflow-y: auto; border: 1px solid #334155; box-sizing: border-box;
+            width: 100%; max-width: 400px; height: 250px; background: #000; color: #00ff00; 
+            font-family: monospace; font-size: 11px; padding: 10px; margin-top: 20px; 
+            border-radius: 8px; overflow-y: auto; border: 1px solid #334155; text-align: left;
         }
-        .log-entry { margin-bottom: 2px; border-bottom: 1px solid #111; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>SP624E Controller</h1>
-    
-    <button id="connectBtn">STEP 1: CONNECT DEVICE</button>
-    <button id="offBtn">TURN ALL OFF</button>
-
-    <div class="slider-row">
-        <label>Red <span id="rOut">0</span></label>
-        <input type="range" id="rVal" min="0" max="255" value="0">
-    </div>
-    <div class="slider-row">
-        <label>Green <span id="gOut">0</span></label>
-        <input type="range" id="gVal" min="0" max="255" value="0">
-    </div>
-    <div class="slider-row">
-        <label>Blue <span id="bOut">0</span></label>
-        <input type="range" id="bVal" min="0" max="255" value="0">
-    </div>
-    <div class="slider-row">
-        <label>White <span id="wOut">0</span></label>
-        <input type="range" id="wVal" min="0" max="255" value="0">
-    </div>
+    <h1>UUID Scanner</h1>
+    <p style="font-size: 0.8rem; opacity: 0.7;">We need to find the correct Service UUID for your device.</p>
+    <button id="scanBtn">SCAN DEVICE SERVICES</button>
 </div>
 
-<div id="debugLog">
-    <div class="log-entry">> System Ready. Click Connect.</div>
-</div>
+<div id="debugLog">> Click Scan and select your LED device.</div>
 
 <script>
-    const SERVICE_UUID = '0000fef0-0000-1000-8000-00805f9b34fb';
-    const CHARACTERISTIC_UUID = '0000fec1-0000-1000-8000-00805f9b34fb';
-
-    let bleDevice, bleCharacteristic;
-
     const log = (msg) => {
         const entry = document.createElement('div');
-        entry.className = 'log-entry';
+        entry.style.marginBottom = "5px";
         entry.innerText = `> ${msg}`;
         const container = document.getElementById('debugLog');
         container.appendChild(entry);
         container.scrollTop = container.scrollHeight;
     };
 
-    document.getElementById('connectBtn').addEventListener('click', async () => {
+    document.getElementById('scanBtn').addEventListener('click', async () => {
         try {
-            log("Requesting Bluetooth Device...");
-            bleDevice = await navigator.bluetooth.requestDevice({
+            log("Requesting Device...");
+            // We request all devices and many common service UUIDs just in case
+            const device = await navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
-                optionalServices: [SERVICE_UUID]
+                optionalServices: [
+                    '0000fef0-0000-1000-8000-00805f9b34fb',
+                    '0000ffe0-0000-1000-8000-00805f9b34fb',
+                    '0000ff01-0000-1000-8000-00805f9b34fb',
+                    '00010203-0405-0607-0809-0a0b0c0d0e0f'
+                ]
             });
 
-            log(`Found: ${bleDevice.name}. Connecting to GATT...`);
-            const server = await bleDevice.gatt.connect();
+            log(`Connected to: ${device.name}`);
+            const server = await device.gatt.connect();
 
-            log("Getting Primary Service...");
-            const service = await server.getPrimaryService(SERVICE_UUID);
-
-            log("Getting Write Characteristic...");
-            bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-
-            log("SUCCESS: Connected & Ready.");
-            document.getElementById('connectBtn').innerText = "CONNECTED";
-            document.getElementById('connectBtn').style.background = "#334155";
+            log("Searching for services...");
+            const services = await server.getPrimaryServices();
+            
+            log(`Found ${services.length} services:`);
+            
+            for (const service of services) {
+                log(`SERVICE: ${service.uuid}`);
+                // Try to find characteristics for this service
+                const chars = await service.getCharacteristics();
+                for (const char of chars) {
+                    log(`-- CHAR: ${char.uuid}`);
+                }
+            }
+            log("--- SCAN COMPLETE ---");
         } catch (error) {
             log(`ERROR: ${error.message}`);
-            console.error(error);
         }
     });
-
-    async function sendCommand(r, g, b, w) {
-        if (!bleCharacteristic) return;
-        const data = new Uint8Array([0x31, r, g, b, w, 0x00, 0x01, 0xFF]);
-        try {
-            await bleCharacteristic.writeValue(data);
-        } catch (err) {
-            log(`Write Error: ${err.message}`);
-        }
-    }
-
-    const sliders = ['rVal', 'gVal', 'bVal', 'wVal'];
-    sliders.forEach(id => {
-        document.getElementById(id).addEventListener('input', () => {
-            const r = document.getElementById('rVal').value;
-            const g = document.getElementById('gVal').value;
-            const b = document.getElementById('bVal').value;
-            const w = document.getElementById('wVal').value;
-            
-            document.getElementById('rOut').innerText = r;
-            document.getElementById('gOut').innerText = g;
-            document.getElementById('bOut').innerText = b;
-            document.getElementById('wOut').innerText = w;
-            
-            sendCommand(r, g, b, w);
-        });
-    });
-
-    document.getElementById('offBtn').onclick = () => {
-        sliders.forEach(id => document.getElementById(id).value = 0);
-        ['rOut', 'gOut', 'bOut', 'wOut'].forEach(id => document.getElementById(id).innerText = 0);
-        sendCommand(0, 0, 0, 0);
-        log("Command Sent: All Off");
-    };
 </script>
-
 </body>
 </html>
+
 
