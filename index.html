@@ -153,7 +153,7 @@ document.getElementById('connectBtn').onclick = async () => {
   try {
     log('Requesting device...');
     device = await navigator.bluetooth.requestDevice({
-      filters:[{ services:[SERVICE_UUID] }],
+      acceptAllDevices: true,
       optionalServices:[SERVICE_UUID]
     });
 
@@ -203,3 +203,4 @@ window.addEventListener('beforeunload', () => {
 </script>
 </body>
 </html>
+
