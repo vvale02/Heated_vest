@@ -3,103 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SP624E LED Controller</title>
+    <title>SP624E Debug Controller</title>
     <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f8fafc;
-            --accent: #38bdf8;
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --accent: #38bdf8; }
+        body { font-family: sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { width: 100%; max-width: 400px; background: var(--card); padding: 1.5rem; border-radius: 1.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        h1 { font-size: 1.2rem; text-align: center; color: var(--accent); margin-top: 0; }
+        
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        #connectBtn { background: #10b981; color: white; }
+        #offBtn { background: #ef4444; color: white; }
+        
+        .slider-row { margin-bottom: 15px; }
+        label { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; }
+        input[type=range] { width: 100%; height: 8px; border-radius: 5px; background: #334155; outline: none; -webkit-appearance: none; }
+        
+        /* Debug Log Style */
+        #debugLog { 
+            width: 100%; max-width: 400px; height: 120px; background: #000; color: #00ff00; 
+            font-family: monospace; font-size: 10px; padding: 10px; margin-top: 20px; 
+            border-radius: 8px; overflow-y: auto; border: 1px solid #334155; box-sizing: border-box;
         }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            width: 90%;
-            max-width: 400px;
-            background: var(--card);
-            padding: 2rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            text-align: center;
-        }
-        h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--accent); }
-        
-        button {
-            width: 100%;
-            padding: 1rem;
-            border: none;
-            border-radius: 0.75rem;
-            font-weight: bold;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: transform 0.1s;
-            margin-bottom: 1rem;
-        }
-        button:active { transform: scale(0.98); }
-        
-        #connectBtn { background-color: #10b981; color: white; }
-        #offBtn { background-color: #ef4444; color: white; }
-        
-        .control-group { margin-top: 2rem; text-align: left; }
-        .slider-row { margin-bottom: 1.5rem; }
-        
-        label { display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem; font-weight: 500; }
-        .val-display { color: var(--accent); font-family: monospace; }
-        
-        input[type=range] {
-            width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: #334155;
-            outline: none;
-            -webkit-appearance: none;
-        }
-        
-        /* Custom Slider Thumb Colors */
-        #rVal::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #ff4444; border-radius: 50%; cursor: pointer; }
-        #gVal::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #22c55e; border-radius: 50%; cursor: pointer; }
-        #bVal::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #3b82f6; border-radius: 50%; cursor: pointer; }
-        #wVal::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: #ffffff; border-radius: 50%; cursor: pointer; }
-
-        #status { font-size: 0.8rem; margin-top: 1.5rem; opacity: 0.6; }
+        .log-entry { margin-bottom: 2px; border-bottom: 1px solid #111; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>LED Controller</h1>
+    <h1>SP624E Controller</h1>
     
-    <button id="connectBtn">Connect to SP624E</button>
-    <button id="offBtn">Turn All OFF</button>
+    <button id="connectBtn">STEP 1: CONNECT DEVICE</button>
+    <button id="offBtn">TURN ALL OFF</button>
 
-    <div class="control-group">
-        <div class="slider-row">
-            <label>Red <span class="val-display" id="rOut">0</span></label>
-            <input type="range" id="rVal" min="0" max="255" value="0">
-        </div>
-        <div class="slider-row">
-            <label>Green <span class="val-display" id="gOut">0</span></label>
-            <input type="range" id="gVal" min="0" max="255" value="0">
-        </div>
-        <div class="slider-row">
-            <label>Blue <span class="val-display" id="bOut">0</span></label>
-            <input type="range" id="bVal" min="0" max="255" value="0">
-        </div>
-        <div class="slider-row">
-            <label>White <span class="val-display" id="wOut">0</span></label>
-            <input type="range" id="wVal" min="0" max="255" value="0">
-        </div>
+    <div class="slider-row">
+        <label>Red <span id="rOut">0</span></label>
+        <input type="range" id="rVal" min="0" max="255" value="0">
     </div>
+    <div class="slider-row">
+        <label>Green <span id="gOut">0</span></label>
+        <input type="range" id="gVal" min="0" max="255" value="0">
+    </div>
+    <div class="slider-row">
+        <label>Blue <span id="bOut">0</span></label>
+        <input type="range" id="bVal" min="0" max="255" value="0">
+    </div>
+    <div class="slider-row">
+        <label>White <span id="wOut">0</span></label>
+        <input type="range" id="wVal" min="0" max="255" value="0">
+    </div>
+</div>
 
-    <div id="status">Status: Disconnected</div>
+<div id="debugLog">
+    <div class="log-entry">> System Ready. Click Connect.</div>
 </div>
 
 <script>
@@ -108,82 +63,76 @@
 
     let bleDevice, bleCharacteristic;
 
-    const connectBtn = document.getElementById('connectBtn');
-    const offBtn = document.getElementById('offBtn');
-    const statusDiv = document.getElementById('status');
-
-    // UI elements for feedback
-    const sliders = {
-        r: document.getElementById('rVal'),
-        g: document.getElementById('gVal'),
-        b: document.getElementById('bVal'),
-        w: document.getElementById('wVal')
-    };
-    const outputs = {
-        r: document.getElementById('rOut'),
-        g: document.getElementById('gOut'),
-        b: document.getElementById('bOut'),
-        w: document.getElementById('wOut')
+    const log = (msg) => {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerText = `> ${msg}`;
+        const container = document.getElementById('debugLog');
+        container.appendChild(entry);
+        container.scrollTop = container.scrollHeight;
     };
 
-    connectBtn.addEventListener('click', async () => {
+    document.getElementById('connectBtn').addEventListener('click', async () => {
         try {
-            statusDiv.innerText = "Searching...";
+            log("Requesting Bluetooth Device...");
             bleDevice = await navigator.bluetooth.requestDevice({
-                filters: [{ services: [SERVICE_UUID] }]
+                acceptAllDevices: true,
+                optionalServices: [SERVICE_UUID]
             });
 
+            log(`Found: ${bleDevice.name}. Connecting to GATT...`);
             const server = await bleDevice.gatt.connect();
+
+            log("Getting Primary Service...");
             const service = await server.getPrimaryService(SERVICE_UUID);
+
+            log("Getting Write Characteristic...");
             bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
 
-            statusDiv.innerText = "Connected: " + bleDevice.name;
-            connectBtn.style.backgroundColor = "#334155";
-            connectBtn.innerText = "CONNECTED";
+            log("SUCCESS: Connected & Ready.");
+            document.getElementById('connectBtn').innerText = "CONNECTED";
+            document.getElementById('connectBtn').style.background = "#334155";
         } catch (error) {
-            statusDiv.innerText = "Error: " + error.message;
+            log(`ERROR: ${error.message}`);
             console.error(error);
         }
     });
 
     async function sendCommand(r, g, b, w) {
         if (!bleCharacteristic) return;
-
-        // Byte Structure: Header, R, G, B, W, Speed(0), Mode(Static), Terminator
         const data = new Uint8Array([0x31, r, g, b, w, 0x00, 0x01, 0xFF]);
-
         try {
             await bleCharacteristic.writeValue(data);
         } catch (err) {
-            console.error("Transmission failed", err);
+            log(`Write Error: ${err.message}`);
         }
     }
 
-    function handleUpdate() {
-        const r = parseInt(sliders.r.value);
-        const g = parseInt(sliders.g.value);
-        const b = parseInt(sliders.b.value);
-        const w = parseInt(sliders.w.value);
-
-        outputs.r.innerText = r;
-        outputs.g.innerText = g;
-        outputs.b.innerText = b;
-        outputs.w.innerText = w;
-
-        sendCommand(r, g, b, w);
-    }
-
-    // Attach listeners
-    Object.values(sliders).forEach(slider => {
-        slider.addEventListener('input', handleUpdate);
+    const sliders = ['rVal', 'gVal', 'bVal', 'wVal'];
+    sliders.forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+            const r = document.getElementById('rVal').value;
+            const g = document.getElementById('gVal').value;
+            const b = document.getElementById('bVal').value;
+            const w = document.getElementById('wVal').value;
+            
+            document.getElementById('rOut').innerText = r;
+            document.getElementById('gOut').innerText = g;
+            document.getElementById('bOut').innerText = b;
+            document.getElementById('wOut').innerText = w;
+            
+            sendCommand(r, g, b, w);
+        });
     });
 
-    offBtn.addEventListener('click', () => {
-        Object.values(sliders).forEach(s => s.value = 0);
-        Object.values(outputs).forEach(o => o.innerText = 0);
+    document.getElementById('offBtn').onclick = () => {
+        sliders.forEach(id => document.getElementById(id).value = 0);
+        ['rOut', 'gOut', 'bOut', 'wOut'].forEach(id => document.getElementById(id).innerText = 0);
         sendCommand(0, 0, 0, 0);
-    });
+        log("Command Sent: All Off");
+    };
 </script>
 
 </body>
 </html>
+
