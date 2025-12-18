@@ -129,11 +129,8 @@ function buildPayload(r,g,b,w) {
 async function writeCommand(payload) {
   if (!characteristic) return;
   try {
-    if (writeWithoutResponse) {
       await characteristic.writeValueWithoutResponse(payload);
-    } else {
-      await characteristic.writeValue(payload);
-    }
+    
   } catch (e) {
     log('Write error: ' + e.message);
   }
@@ -203,4 +200,5 @@ window.addEventListener('beforeunload', () => {
 </script>
 </body>
 </html>
+
 
