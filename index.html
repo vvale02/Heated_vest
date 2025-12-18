@@ -72,4 +72,134 @@ input[type=range]::-webkit-slider-thumb {
   <div class="slider-row">
     <label>Green <span id="gOut">0</span></label>
     <input type="range" id="gVal" min="0" max="255">
-  </
+  </div>
+  <div class="slider-row">
+    <label>Blue <span id="bOut">0</span></label>
+    <input type="range" id="bVal" min="0" max="255">
+  </div>
+  <div class="slider-row">
+    <label>White <span id="wOut">0</span></label>
+    <input type="range" id="wVal" min="0" max="255">
+  </div>
+</div>
+
+<div id="debugLog">> Ready</div>
+
+<script>
+// ======================================================
+// CONFIRMED WORKING UUIDs (UNCHANGED)
+// ======================================================
+const SERVICE_UUID = '0000ffe0-0000-1000-8000-00805f9b34fb';
+const CHARACTERISTIC_UUID = '0000ffe1-0000-1000-8000-00805f9b34fb';
+
+// ======================================================
+// OPTIONAL: Channel order mapping (SceneX calibration)
+// Default: R,G,B,W
+// Example alternative: ['w','r','g','b']
+// ======================================================
+let channelOrder = ['r','g','b','w'];
+
+// ======================================================
+let device = null;
+let characteristic = null;
+let writeWithoutResponse = false;
+let debounceTimer = null;
+
+// ======================================================
+const log = msg => {
+  const box = document.getElementById('debugLog');
+  box.innerHTML += `<div>> ${msg}</div>`;
+  box.scrollTop = box.scrollHeight;
+};
+
+// ======================================================
+function buildPayload(r,g,b,w) {
+  const map = { r, g, b, w };
+  const ch = channelOrder.map(c => map[c]);
+  return new Uint8Array([
+    0x31,        // Command header
+    ch[0], ch[1], ch[2], ch[3], // RGBW
+    0x00,        // Speed placeholder
+    0x01,        // Static mode
+    0xFF         // Terminator
+  ]);
+}
+
+// ======================================================
+async function writeCommand(payload) {
+  if (!characteristic) return;
+  try {
+    if (writeWithoutResponse) {
+      await characteristic.writeValueWithoutResponse(payload);
+    } else {
+      await characteristic.writeValue(payload);
+    }
+  } catch (e) {
+    log('Write error: ' + e.message);
+  }
+}
+
+// ======================================================
+function sendDebounced(r,g,b,w) {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    const p = buildPayload(r,g,b,w);
+    writeCommand(p);
+  }, 150);
+}
+
+// ======================================================
+document.getElementById('connectBtn').onclick = async () => {
+  try {
+    log('Requesting device...');
+    device = await navigator.bluetooth.requestDevice({
+      filters:[{ services:[SERVICE_UUID] }],
+      optionalServices:[SERVICE_UUID]
+    });
+
+    device.addEventListener('gattserverdisconnected', () => {
+      log('Disconnected');
+      characteristic = null;
+      document.getElementById('connectBtn').innerText = 'CONNECT';
+      document.getElementById('connectBtn').style.background = 'var(--ok)';
+    });
+
+    log('Connecting...');
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService(SERVICE_UUID);
+    characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+    writeWithoutResponse = characteristic.properties.writeWithoutResponse;
+    log('Connected (writeWithoutResponse=' + writeWithoutResponse + ')');
+
+    document.getElementById('connectBtn').innerText = 'CONNECTED';
+    document.getElementById('connectBtn').style.background = '#334155';
+  } catch (e) {
+    log('Error: ' + e.message);
+  }
+};
+
+// ======================================================
+['rVal','gVal','bVal','wVal'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    const r = +rVal.value, g = +gVal.value, b = +bVal.value, w = +wVal.value;
+    rOut.textContent=r; gOut.textContent=g; bOut.textContent=b; wOut.textContent=w;
+    sendDebounced(r,g,b,w);
+  });
+});
+
+// ======================================================
+document.getElementById('offBtn').onclick = () => {
+  rVal.value=gVal.value=bVal.value=wVal.value=0;
+  rOut.textContent=gOut.textContent=bOut.textContent=wOut.textContent=0;
+  sendDebounced(0,0,0,0);
+  log('All OFF');
+};
+
+// ======================================================
+window.addEventListener('beforeunload', () => {
+  if (device?.gatt?.connected) device.gatt.disconnect();
+});
+</script>
+</body>
+</html>
