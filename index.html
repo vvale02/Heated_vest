@@ -165,6 +165,7 @@ document.getElementById('connectBtn').onclick = async () => {
     const server = await device.gatt.connect();
     const service = await server.getPrimaryService(SERVICE_UUID);
     characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+    await characteristic.startNotifications();
 
     writeWithoutResponse = characteristic.properties.writeWithoutResponse;
     log('Connected (writeWithoutResponse=' + writeWithoutResponse + ')');
@@ -200,5 +201,6 @@ window.addEventListener('beforeunload', () => {
 </script>
 </body>
 </html>
+
 
 
